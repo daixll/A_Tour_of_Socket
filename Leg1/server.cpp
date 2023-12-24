@@ -47,9 +47,8 @@ int main(){
             if( war(len <= 0, "接收数据错误") ){
                 close(client);
                 break;
-            } else {
+            } else 
                 std::cout << "\n接收数据成功，长度：" << len << "；内容：" << buf << std::endl;
-            }
         }
     }
 
