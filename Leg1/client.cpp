@@ -25,7 +25,8 @@ int main(){
     memset(&server_addr, 0, sizeof server_addr);
     server_addr.sin_family      = AF_INET;
     server_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
-    server_addr.sin_port        = htons(8081);
+    server_addr.sin_port        = htons(8080);
+    
     err(
         connect(client, (sockaddr*)&server_addr, sizeof server_addr) == -1,
         "连接服务端错误"
@@ -35,15 +36,16 @@ int main(){
     while(1){
         // 输入数据
         memset(buf, '\0', sizeof buf);
-        std::cout<<"输入要发送的数据：";
-        std::cin>>buf;
-        if(strcmp(buf, "quit")==0) break;
+        std::cout<<"输入要发送的数据："; std::cin>>buf;
+        if( strcmp(buf, "quit")==0 ) break;
         send(client, buf, strlen(buf), 0);
+        
         // 接收数据
         memset(buf, '\0', sizeof buf);
         int len = recv(client, buf, sizeof buf, 0);
         std::cout<<"\n接收数据成功，长度:"<<len<<"；内容："<<buf<<"\n";
     }
+
     close(client);
     return 0;
 }

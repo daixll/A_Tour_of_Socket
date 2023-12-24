@@ -24,7 +24,7 @@ int main(){
     sockaddr_in server_addr;
     memset(&server_addr, 0, sizeof server_addr);
     server_addr.sin_family      = AF_INET;
-    server_addr.sin_addr.s_addr = inet_addr("0.0.0.0");
+    server_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
     server_addr.sin_port        = htons(8080);
     
     int reuse = 1;  // 端口复用
@@ -60,8 +60,7 @@ int main(){
             std::cout << "\n接收数据成功，长度：" << len << "；内容：" << buf <<"\n";
             // 输入数据
             memset(buf, '\0', sizeof buf);
-            std::cout<<"输入要发送的数据：";
-            std::cin>>buf;
+            std::cout<<"输入要发送的数据："; std::cin>>buf;
             send(client, buf, strlen(buf), 0);
         }
     }
