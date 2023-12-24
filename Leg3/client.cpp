@@ -39,5 +39,7 @@ int main(){
         } else
             std::cout << "\n接收数据成功，长度：" << len << "；内容：" << buf << std::endl;
     }
+
+    close(server);
     return 0;
 }

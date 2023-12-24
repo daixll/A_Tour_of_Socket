@@ -46,5 +46,6 @@ int main(){
             std::cout << "发送数据成功！\n" << std::endl;
     }
 
+    close(server);
     return 0;
 }
