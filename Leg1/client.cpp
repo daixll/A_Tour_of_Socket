@@ -20,11 +20,10 @@ int main(){
         "连接服务端错误"
     );
     
+    char buf[1024];
     while(true){
-        char buf[1024];
-        memset(buf, '\0', sizeof buf);
-        
         // 发送数据
+        memset(buf, '\0', sizeof buf);
         std::cout << "输入要发送的数据：";
         scanf("%s", buf);
         if( war(send(client, buf, strlen(buf), 0) <= 0, "发送数据错误") )

@@ -31,6 +31,7 @@ int main(){
     while(true){
         // 接受客户端连接
         sockaddr_in client_addr;
+        memset(&client_addr, '\0', sizeof client_addr);
         socklen_t   client_addr_len = sizeof client_addr;
         int client = accept(server, (sockaddr*)&server_addr, &client_addr_len);
         if( war(client==-1, "接受客户端连接错误") )
@@ -38,11 +39,10 @@ int main(){
         else
             std::cout << "\n新的连接：" << client << " IP地址：" << inet_ntoa(client_addr.sin_addr) << std::endl;
 
+        char buf[1024];
         while(true){
-            char buf[1024];
-            memset(buf, '\0', sizeof buf); 
-
-            // 接收数据        
+            // 接收数据
+            memset(buf, '\0', sizeof buf);        
             int len = recv(client, buf, sizeof buf, 0);
             if( war(len <= 0, "接收数据错误") ){
                 close(client);
