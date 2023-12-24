@@ -1,7 +1,6 @@
 #pragma once
 #include <iostream>
 #include <string>
-#include <ctime>
 
 void err(bool flg, std::string msg){
     if(!flg) return ;   // 如果没有错误，直接返回
