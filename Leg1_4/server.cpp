@@ -16,10 +16,7 @@ int main(int argc, char* args[]){
     memset(&server_addr, '\0', sizeof server_addr);
     server_addr.sin_family      = AF_INET;
     server_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
-    server_addr.sin_port        = htons( (const int)std::stoi(args[1]) );
-    
-    int reuse = 1;  // 端口复用
-    setsockopt(reuse, SOL_SOCKET, SO_REUSEADDR, (const void *)&reuse, sizeof reuse);
+    server_addr.sin_port        = htons(std::stoi(args[1]));
 
     err(
         bind(server, (sockaddr*)&server_addr, sizeof server_addr) == -1,
@@ -27,7 +24,7 @@ int main(int argc, char* args[]){
     );
 
     err(
-        listen(server, 0) == -1,
+        listen(server, 5) == -1,
         "服务端监听错误"
     );
 
@@ -59,7 +56,7 @@ int main(int argc, char* args[]){
             // 1. 发送状态行
             std::string content = "HTTP/1.1 200 OK\r\n";
             // 2. 发送响应头
-            content += "Content-Type: text/html;charset=utf-8\r\n";
+            content += "Connection: keep-alive\r\n";
             // 3. 发送空行
             content += "\r\n";
             // 4. 发送响应体
@@ -73,6 +70,9 @@ int main(int argc, char* args[]){
                 break;
             else
                 std::cout << "发送数据成功！\n" << std::endl;
+
+            close(client);
+            break;
         }
     }
 
