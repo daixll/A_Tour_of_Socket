@@ -30,7 +30,7 @@ int main(){
         sockaddr_in client_addr;
         memset(&client_addr, '\0', sizeof client_addr);
         socklen_t   client_addr_len = sizeof client_addr;
-        int client = accept(server, (sockaddr*)&client, &client_addr_len);
+        int client = accept(server, (sockaddr*)&client_addr, &client_addr_len);
         if( war(client==-1, "接受客户端连接错误") )
             continue;
         else

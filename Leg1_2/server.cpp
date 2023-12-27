@@ -30,7 +30,7 @@ int main(){
         sockaddr_in client_addr;
         memset(&client_addr, '\0', sizeof client_addr);
         socklen_t   client_addr_len = sizeof client_addr;
-        int client = accept(server, (sockaddr*)&server_addr, &client_addr_len);
+        int client = accept(server, (sockaddr*)&client_addr, &client_addr_len);
         if( war(client==-1, "接受客户端连接错误") )
             continue;
         else
@@ -50,7 +50,7 @@ int main(){
             // 发送数据
             memset(buf, '\0', sizeof buf);
             std::cout << "输入要发送的数据：";
-            scanf("%s", buf);
+            std::cin >> buf;
             if( war(send(client, buf, strlen(buf), 0) <= 0, "发送数据错误") )
                 break;
             else
