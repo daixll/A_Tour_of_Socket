@@ -52,17 +52,11 @@ int main(int argc, char* args[]){
                 std::cout << "\n接收数据成功，长度：" << len << "；内容：\n" << buf << std::endl;
 
             // 发送数据
-            memset(buf, '\0', sizeof buf);
-            // 1. 发送状态行
-            std::string content = "HTTP/1.1 200 OK\r\n";
-            // 2. 发送响应头
-            content += "Connection: keep-alive\r\n";
-            // 3. 发送空行
-            content += "\r\n";
-            // 4. 发送响应体
-            // 读取文件
-            std::ifstream file("index.html");
-            std::string   line;
+            std::string content = "HTTP/1.1 200 OK\r\n";// 1. 组装响应行
+            content += "Connection: keep-alive\r\n";    // 2. 组装响应头
+            content += "\r\n";                          // 3. 组装空行
+            std::ifstream file("index.html");           // 4. 组装响应体
+            std::string   line;                         //    读取文件
             while( std::getline(file, line) )
                 content += line;
             // 发送
