@@ -1,3 +1,6 @@
+// UDP
+// 客户端发送一条数据，接收一条数据
+// 服务端接收一条数据，发送一条数据
 #include "tool.h"
 
 #include <sys/socket.h>
@@ -29,7 +32,7 @@ int main(){
         socklen_t client_addr_len = sizeof client_addr;      
         int len = recvfrom(server, buf, sizeof buf, 0, (sockaddr*)&client_addr, &client_addr_len);
         if(len == -1){
-            std::cout<<"接收数据错误"<<std::endl;
+            std::cout << "接收数据错误" << std::endl;
             continue;
         } else
             std::cout << "\n接收数据成功，长度：" << len << "；内容：" << buf << std::endl;
@@ -37,7 +40,7 @@ int main(){
         // 发送数据
         memset(buf, '\0', sizeof buf);
         std::cout << "输入要发送的数据：";
-        scanf("%s", buf);
+        std::cin >> buf;
         if( war( 
                 sendto(server, buf, strlen(buf), 0, (sockaddr*)&client_addr, client_addr_len) == -1,
                 "发送数据错误") )
