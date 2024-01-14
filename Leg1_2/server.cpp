@@ -1,3 +1,6 @@
+// TCP
+// 客户端发送一条数据，接收一条数据
+// 服务端接收一条数据，发送一条数据
 #include "tool.h"
 
 #include <sys/socket.h>
