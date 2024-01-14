@@ -1,3 +1,6 @@
+// TCP 非阻塞
+// 服务端一直接收客户端连接
+// 服务端一直接收客户端数据
 #include "tool.h"
 
 #include <sys/socket.h>
@@ -15,7 +18,7 @@ int main(){
     memset(&server_addr, '\0', sizeof server_addr);
     server_addr.sin_family      = AF_INET;
     server_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
-    server_addr.sin_port        = htons(10086);
+    server_addr.sin_port        = htons(10087);
 
     err(
         bind(server, (sockaddr*)&server_addr, sizeof server_addr) == -1,
@@ -45,6 +48,7 @@ int main(){
         
         // 客户端设置为非阻塞
         fcntl(client, F_SETFL, O_NONBLOCK);
+
         char buf[1024];
         while(true){
             // 接收数据
@@ -55,20 +59,9 @@ int main(){
                 continue;
             } else 
                 std::cout << "\n接收数据成功，长度：" << len << "；内容：" << buf << std::endl;
-
-            // 发送数据
-            memset(buf, '\0', sizeof buf);
-            std::cout << "输入要发送的数据：";
-            scanf("%s", buf);
-            if(strcmp(buf, "exit") == 0){
-                close(client);
-                break;
-            }
-            if( war(send(client, buf, strlen(buf), 0) <= 0, "发送数据错误") )
-                break;
-            else
-                std::cout << "发送数据成功！\n" << std::endl;
         }
     }
+
     close(server);
+    return 0;
 }
