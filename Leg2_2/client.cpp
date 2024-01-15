@@ -26,9 +26,6 @@ int main(){
         "连接服务端错误" 
     );
 
-    // 客户端设置为非阻塞
-    fcntl(client, F_SETFL, O_NONBLOCK);
-
     char buf[1024];
     while(true){
         // 发送数据
