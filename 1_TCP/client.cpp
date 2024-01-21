@@ -29,8 +29,10 @@ int main(){
         memset(buf, '\0', sizeof buf);
         std::cout << "输入要发送的数据：";
         std::cin >> buf;
-        if( war(send(client, buf, strlen(buf), 0) <= 0, "发送数据错误") )
+        if( war(send(client, buf, strlen(buf), 0) <= 0, "发送数据错误") ){
+            close(client);
             break;
+        }
         else
             std::cout << "发送数据成功！\n" << std::endl;
 
