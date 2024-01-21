@@ -10,6 +10,7 @@
 
 int main(){
     int server = socket(AF_INET, SOCK_DGRAM, 0);
+    err(server == -1, "socket创建错误");
 
     sockaddr_in server_addr;
     memset(&server_addr, '\0', sizeof server_addr);
