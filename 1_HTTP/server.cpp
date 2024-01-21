@@ -1,3 +1,5 @@
+// HTTP
+// 服务端仅仅能返回 index.html 文件的内容
 #include "tool.h"
 
 #include <sys/socket.h>
