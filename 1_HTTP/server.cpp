@@ -15,7 +15,7 @@ int main(int argc, char* args[]){
     sockaddr_in server_addr;
     memset(&server_addr, '\0', sizeof server_addr);
     server_addr.sin_family      = AF_INET;
-    server_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+    server_addr.sin_addr.s_addr = inet_addr("0.0.0.0");
     server_addr.sin_port        = htons(std::stoi(args[1]));
 
     err(
@@ -24,7 +24,7 @@ int main(int argc, char* args[]){
     );
 
     err(
-        listen(server, 5) == -1,
+        listen(server, 0) == -1,
         "服务端监听错误"
     );
 
@@ -39,7 +39,7 @@ int main(int argc, char* args[]){
         else
             std::cout << "\n新的连接：" << client << " IP地址：" << inet_ntoa(client_addr.sin_addr) << std::endl;
 
-        char buf[10240];
+        char buf[1024];
         while(true){ 
             // 接收数据
             memset(buf, '\0', sizeof buf);
@@ -59,6 +59,8 @@ int main(int argc, char* args[]){
             std::string   line;                         //    读取文件
             while( std::getline(file, line) )
                 content += line;
+            file.close();
+
             // 发送
             if( war(send(client, content.c_str(), content.size(), 0) <= 0, "发送数据错误") )
                 break;
