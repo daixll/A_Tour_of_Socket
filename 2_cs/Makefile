@@ -1,10 +1,13 @@
 CC = g++
 CFLAGS = -std=c++23
 
-all: clean server
+all: clean server client
 
-server: SOURCES/Tool.cpp SOURCES/SockAddr.cpp SOURCES/Accepter.cpp SOURCES/Event.cpp main.cpp
-	$(CC) $(CFLAGS) -o server SOURCES/Tool.cpp SOURCES/SockAddr.cpp SOURCES/Accepter.cpp SOURCES/Event.cpp main.cpp
+server: server.cpp
+	$(CC) $(CFLAGS) -o server server.cpp
+
+client: client.cpp
+	$(CC) $(CFLAGS) -o client client.cpp
 
 clean:
-	rm -f server
+	rm -f server client
