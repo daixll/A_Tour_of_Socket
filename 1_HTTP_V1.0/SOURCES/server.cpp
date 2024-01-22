@@ -1,12 +1,12 @@
-#include "HEADERS/server.h"
+#include "../HEADERS/server.h"
 
 using namespace jiao;
 
 SockAddr::SockAddr(const std::string& ip, const int& port){
     sock_addr     = new sockaddr_in;
     sock_addr_len = new socklen_t;
-
     memset(sock_addr, '\0', sizeof *sock_addr);
+
     sock_addr->sin_family      = AF_INET;
     sock_addr->sin_addr.s_addr = inet_addr(ip.c_str());
     sock_addr->sin_port        = htons(port);
@@ -20,19 +20,21 @@ SockAddr::~SockAddr(){
 }
 
 Accepter::Accepter(const int& sock){
-    SockAddr* client_addr = new SockAddr();
+    client_addr     = new sockaddr_in;
+    client_addr_len = new socklen_t;
+    memset(client_addr, '\0', sizeof *client_addr);
 }
 
 Accepter::~Accepter(){
     delete client_addr;
+    delete client_addr_len;
 }
 
-int Accepter::ac(int sock){
-    memset(client_addr->get_sock_addr(), '\0', *client_addr->get_sock_addr_len());
-    return accept(sock, (sockaddr*)client_addr->get_sock_addr(), client_addr->get_sock_addr_len());
+int Accepter::ac(const int sock){
+    return accept(sock, (sockaddr*)client_addr, client_addr_len);
 }
 
-HTTPServer::HTTPServer(const std::string& ip="0.0.0.0", const int& port=10086){
+HTTPServer::HTTPServer(const std::string& ip, const int& port){
     sock = socket(AF_INET, SOCK_STREAM, 0);
     err(sock == -1, "socket创建错误");
 
@@ -61,6 +63,7 @@ void HTTPServer::run(std::function<std::string(std::string)> deal){
 
         while(true){
             // 接收数据
+            std::cout << "等待数据..." << std::endl;
             std::string content = recvMsg(client);
             if(content == "") {
                 close(client);
@@ -71,22 +74,45 @@ void HTTPServer::run(std::function<std::string(std::string)> deal){
             content = deal(content);
 
             // 发送数据
-            content = sendMsg(client, content);
-            if(content == "") {
+            std::cout << "发送数据..." << std::endl;
+            if(!sendMsg(client, content)){
                 close(client);
                 break;
             }
-
         }
     }
 }
 
 std::string HTTPServer::recvMsg(const int& client){
-    // 循环接收，直到接收完
-    std::string content = "";
+    // 接收一次数据
+    memset(buf, '\0', sizeof buf);
+    int len = recv(client, buf, sizeof buf, 0);
     
+    if(len == -1) {
+        war(true, "接收数据错误");
+        return "";
+    }
+    else if(len == 0) {
+        std::cout << "\n客户端断开连接：" << client << std::endl;
+        return "";
+    }
+    
+    return std::string(buf);
 }
 
-std::string HTTPServer::sendMsg(const int& client, const std::string& msg){
-    
+bool HTTPServer::sendMsg(const int& client, std::string& msg){
+    int len = 0;
+    len = send(client, msg.c_str(), msg.size(), 0);
+    if(len == -1) {
+        war(true, "发送数据错误");
+        return 0;
+    }
+    else if(len == 0) {
+        std::cout << "\n客户端断开连接：" << client << std::endl;
+        return 0;
+    }
+
+    std::cout << "发送成功：" << len << std::endl;
+
+    return 1;
 }

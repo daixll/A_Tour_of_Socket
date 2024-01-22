@@ -1,5 +1,5 @@
 #pragma once
-#include "HEADERS/tool.h"
+#include "../HEADERS/tool.h"
 #include <sys/socket.h>
 #include <string.h>
 #include <arpa/inet.h>
@@ -28,10 +28,11 @@ public:
     Accepter(const int& sock);
     ~Accepter();
 
-    int ac(int sock);
+    int ac(const int sock);
 
 private:
-    SockAddr* client_addr;
+    sockaddr_in* client_addr;
+    socklen_t*   client_addr_len;
 };
 
 
@@ -44,9 +45,9 @@ public:
     void run(std::function<std::string(std::string)> deal);
 
 private:
-    char buf[128];
+    char buf[1024];
     std::string recvMsg(const int& client);
-    std::string sendMsg(const int& client, const std::string& msg);
+    bool sendMsg(const int& client, std::string& msg);
     int sock;
 };
 
