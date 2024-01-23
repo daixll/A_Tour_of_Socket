@@ -75,9 +75,11 @@ void Event::loop(std::function<std::string(std::string)> deal){
 
         for(const auto c: cs){
             std::string msg = recvMsg(c);
-            if(msg == "kill")
+            if(msg == "")
+                continue;
+            else if(msg == "kill")
                 down.insert(c);
-            if(sendMsg(c, deal(msg)) == 0)
+            else if(sendMsg(c, deal(msg)) == 0)
                 down.insert(c);
         }
 
