@@ -3,23 +3,25 @@
 using namespace jiao;
 
 Conn::Conn(const std::string& ip, const int& port){
-    addr = new SockAddr(ip, port);
+    _server_addr = new SockAddr(ip, port);
+    _server_sock = socket(AF_INET, SOCK_STREAM, 0);
+    if(war(_server_sock == -1, "连接器: 创建套接字错误!"))
+        return;
 
-    sock = socket(AF_INET, SOCK_STREAM, 0);
-    if(war(sock == -1, "创建套接字错误")) return;
+    if(connect(_server_sock, (sockaddr*)&_server_addr->addr, _server_addr->addr_len) == -1){
+        war(true, "连接器: 连接 " + ip + ":" + std::to_string(port) + " 失败!");
+        close(_server_sock);
+        return;
+    }
 
-    fcntl(sock, F_SETFL, ~O_NONBLOCK); // 设置为阻塞
-
-    int ret = connect(sock, (sockaddr*)addr->get_addr(), *addr->get_addr_len());
-    if(war(ret == -1, "连接套接字错误 " + ip + ":" + std::to_string(port))) return;
-
+    log("连接器: 连接 " + ip + ":" + std::to_string(port) + " 成功!");
 }
 
 Conn::~Conn(){
-    delete addr;
-    close(sock);
+    delete _server_addr;
+    close(_server_sock);
 }
 
 int Conn::getSock() const{
-    return sock;
+    return _server_sock;
 }

@@ -7,15 +7,17 @@
 
 namespace jiao{
 
+// 连接器
 class Conn
 {
 public:
     Conn(const std::string& ip, const int& port);
     ~Conn();
+
     int getSock() const;
 private:
-    int sock;
-    SockAddr* addr;
+    int         _server_sock;   // 服务端的 socket
+    SockAddr*   _server_addr;   // 服务端的地址
 };
 
 }   // namespace jiao

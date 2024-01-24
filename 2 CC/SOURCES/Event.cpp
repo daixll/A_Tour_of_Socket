@@ -5,17 +5,18 @@ using namespace jiao;
 
 Event::Event(const std::string& ip, const int& port){
     addr = new SockAddr(ip, port);
-
     sock = socket(AF_INET, SOCK_STREAM, 0);
-    err(sock == -1, "创建套接字错误");
+    
+    err(-1 == sock,
+        "创建套接字错误");
 
-    int ret = bind(sock, (sockaddr*)addr->get_addr(), *addr->get_addr_len());
-    err(ret == -1, "绑定套接字错误");
+    err(-1 == bind(sock, (sockaddr*)&addr->addr, addr->addr_len),
+        "绑定套接字错误");
 
-    ret = listen(sock, 5);
-    err(ret == -1, "监听套接字错误");
+    err(-1 == listen(sock, 0),
+        "监听套接字错误");
 
-    fcntl(sock, F_SETFL, O_NONBLOCK);
+    fcntl(sock, F_SETFL, O_NONBLOCK);   // 服务器设置为非阻塞
 }
 
 Event::~Event(){
@@ -24,40 +25,26 @@ Event::~Event(){
 }
 
 std::string Event::recvMsg(const int& client){
-    if(cs.count(client) == 0) return "";
-
     memset(buf, '\0', sizeof buf);
     int len = recv(client, buf, sizeof buf, 0);
     
-    if(len == -1) {
-        //war(true, "接收数据错误");
+    if(len == -1 && errno == EAGAIN)
         return "";
-    }
     else if(len == 0) {
-        if (war(errno != 11, "接收时 客户端断开连接: " + std::to_string(client))){
-            close(client);
-            return "kill";
-        }
+        war(true, "接收时: 客户端断开连接: " + std::to_string(client));
+        ds.insert(client);
+        return "kill";
     }
-    
-    std::string tmp(buf);
-    if(tmp.size()) std::cout << "接收到" << client << "的消息: " << tmp << std::endl;
+
     return buf;
 }
 
 int Event::sendMsg(const int& client, const std::string& msg){
-    if(cs.count(client) == 0) return 0;
-    if(msg == "") return -1;
-
     int len = send(client, msg.c_str(), msg.size(), 0);
     
-    if(len == -1) {
-        //war(true, "发送数据错误");
-        return -1;
-    }
-    else if(len == 0) {
-        war(true, "发送时 客户端断开连接: " + std::to_string(client));
-        close(client);
+    if(len == 0) {
+        war(true, "发送时: 客户端断开连接: " + std::to_string(client));
+        ds.insert(client);
         return 0;
     }
 
@@ -67,69 +54,75 @@ int Event::sendMsg(const int& client, const std::string& msg){
 void Event::loop(std::function<std::string(std::string)> deal){
     acer = new Accepter(sock);
 
-    std::ios::sync_with_stdio(false);
+    std::cin.sync_with_stdio(false);
     std::string s;
     while(true){
         // 接收输入的数据，主动连接或者发送数据
         if(std::cin.rdbuf() -> in_avail() > 0){ // 如果输入缓冲区有数据
             std::getline(std::cin, s);          // 读取数据
-
-            if(std::string flg = s.substr(0, 4); flg == "quit"){
-                std::cout << "下号 ..." << std::endl;
-                break;
-            } else if (flg == "kill"){
-                std::string target = s.substr(5);
-                std::cout << "删除 " << target << " ..." << std::endl;
-                close(std::stoi(target));
-                cs.erase(std::stoi(target));
-            } else if (flg == "find"){
-                std::cout << "当前已经建立连接 " << std::endl;
-                for(const auto& c : cs)
-                    std::cout << c << std::endl;
-            } else if (flg == "conn"){
-                std::string ip = s.substr(5, s.find(" ", 5) - 5);
-                int port = std::stoi(s.substr(s.find(" ", 5) + 1));
+            if(std::string flg = s.substr(0, 5); flg == "quit ")
+                break;                          // 主动退出
+            else if(flg == "kill "){            // 主动断开
+                std::string target = s.substr(5, s.find(" ", 5) - 5);
                 
+                if(std::regex_match(target, std::regex("[0-9]+")) && cs.find(std::stoi(target)) != cs.end())
+                    ds.insert(std::stoi(target));
+                else// 验证目标的合法性
+                    war(true, "kill: 无效的目标: " + target);
+            }
+            else if (flg.substr(0, 4) == "find")// 查看已建立连接
+                for(const auto& c : cs) std::cout << c << std::endl;
+            else if (flg == "conn "){           // 主动连接
+                std::string ip = s.substr(5, s.find(" ", 5) - 5);
+                if(!std::regex_match(ip, std::regex("([0-9]{1,3}\\.){3}[0-9]{1,3}"))){
+                    war(true, "conn: 无效的 ip: " + ip);
+                    continue;
+                }   // 验证 ip 的合法性
+                int port = std::stoi(s.substr(s.find(" ", 5) + 1));
+                if(port < 0 || port > 65535){
+                    war(true, "conn: 无效的 port: " + std::to_string(port));
+                    continue;
+                }   // 验证 port 的合法性
+
                 jiao::Conn conn(ip, port);
                 int cc = conn.getSock();
-                if(cc == -1){
-                    std::cout << "连接 " << ip << ":" << port << " 失败！" << std::endl;
-                    continue;
-                }
-                std::cout << "连接 " << cc << " 成功！" << std::endl;
+                if(cc == -1) continue;
+
+                fcntl(cc, F_SETFL, O_NONBLOCK); // 新连接设置为非阻塞
                 cs.insert(cc);
-            } else if (flg == "send"){
+            } else if (flg == "send "){          // 主动发送
                 std::string target = s.substr(5, s.find(" ", 5) - 5);
+                if(!std::regex_match(target, std::regex("[0-9]+")) && cs.find(std::stoi(target)) == cs.end()){
+                    war(true, "send: 无效的目标: " + target);
+                    continue;
+                }   // 验证目标的合法性
                 std::string msg = s.substr(s.find(" ", 5) + 1);
 
-                if(sendMsg(std::stoi(target), msg))
-                    std::cout << "发送给 " << target << " 成功！" << std::endl;
-            } else {
+                if(sendMsg(std::stoi(target), msg) == 0)
+                    ds.insert(std::stoi(target));
+            } else 
                 std::cout << "指令错误！" << std::endl;
+        }
 
-            }
+        // 断开连接
+        for(const auto& d : ds){
+            cs.erase(d);
+            close(d);
         }
 
         // 持续接收客户端连接
-        int client = acer -> ac();
-        if(client != -1) {
-            fcntl(client, F_SETFL, O_NONBLOCK);
-            cs.insert(client);
-            log("客户端建立连接: " + std::to_string(client));
+        if(int cc = acer->ac(); cc != -1){
+            fcntl(cc, F_SETFL, O_NONBLOCK); // 新连接设置为非阻塞
+            cs.insert(cc);
         }
 
         // 持续接收客户端消息
-        std::set<int> down;
-        for(const auto c: cs){
+        for(const auto& c : cs){
             std::string msg = recvMsg(c);
-            if(msg == "") continue;
-
-            if(msg == "kill")
-                down.insert(c);
+            if(msg == "kill") ds.insert(c);
+            else if(msg == "") continue;
             else
-                std::cout << c << ": " + msg << std::endl;
+                std::cout << "接收到 " << c << " 的消息：" << msg << std::endl;
         }
-
-        for(const auto c: down) cs.erase(c);
     }
 }
