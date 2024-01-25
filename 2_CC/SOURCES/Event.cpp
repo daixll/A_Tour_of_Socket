@@ -32,7 +32,6 @@ std::string Event::recvMsg(const int& client){
         return "";
     else if(len == 0) {
         war(true, "接收时: 客户端断开连接: " + std::to_string(client));
-        ds.insert(client);
         return "kill";
     }
 
@@ -83,16 +82,35 @@ void Event::loop(std::function<std::string(std::string)> deal){
                     war(true, "conn: 无效的 port: " + std::to_string(port));
                     continue;
                 }   // 验证 port 的合法性
-
+                
+                // 手动连接 ok
+                
+                SockAddr* _server_addr = new SockAddr(ip, port);
+                int _server_sock = socket(AF_INET, SOCK_STREAM, 0);
+                if(war(_server_sock == -1, "连接器: 创建套接字错误!"))
+                    continue;
+                
+                if(connect(_server_sock, (sockaddr*)&_server_addr->addr, _server_addr->addr_len) == -1){
+                    war(true, "连接器: 连接 " + ip + ":" + std::to_string(port) + " 失败!");
+                    close(_server_sock);
+                    continue;
+                }
+                
+                log("连接 " + ip + ":" + std::to_string(port) + " 成功! Socket: " + std::to_string(_server_sock));
+                fcntl(_server_sock, F_SETFL, O_NONBLOCK); // 设置为非阻塞
+                cs.insert(_server_sock);
+                
+                /*
                 jiao::Conn conn(ip, port);
                 int cc = conn.getSock();
                 if(cc == -1) continue;
 
                 fcntl(cc, F_SETFL, O_NONBLOCK); // 新连接设置为非阻塞
                 cs.insert(cc);
+                */
             } else if (flg == "send "){          // 主动发送
                 std::string target = s.substr(5, s.find(" ", 5) - 5);
-                if(!std::regex_match(target, std::regex("[0-9]+")) && cs.find(std::stoi(target)) == cs.end()){
+                if(!std::regex_match(target, std::regex("[0-9]+")) || cs.find(std::stoi(target)) == cs.end()){
                     war(true, "send: 无效的目标: " + target);
                     continue;
                 }   // 验证目标的合法性
@@ -105,9 +123,12 @@ void Event::loop(std::function<std::string(std::string)> deal){
         }
 
         // 断开连接
-        for(const auto& d : ds){
-            cs.erase(d);
-            close(d);
+        if(!ds.empty()){
+            for(const auto& d : ds){
+                cs.erase(d);
+                close(d);
+            }
+            ds.clear(); // 清空 ds
         }
 
         // 持续接收客户端连接

@@ -17,7 +17,6 @@ public:
     int getSock() const;
 private:
     int         _server_sock;   // 服务端的 socket
-    SockAddr*   _server_addr;   // 服务端的地址
 };
 
 }   // namespace jiao
