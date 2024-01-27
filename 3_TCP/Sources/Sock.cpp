@@ -34,36 +34,64 @@ void Sock::Listen(const int& num){
         "监听失败");
 }
 
-Sock Sock::Ac(){
-    Sock new_sock("", 0);   // 用于接受连接的套接字
+Sock* Sock::Ac(){
+    Sock* new_sock = new Sock("", 0);
+    new_sock->fd = accept(fd, (sockaddr*)&new_sock->addr->addr, &new_sock->addr->addr_len);
 
-    std::cout << "等待连接..." << std::endl;
-    new_sock.fd = accept(fd, (sockaddr*)&new_sock.addr->addr, &new_sock.addr->addr_len);
-    err(new_sock.fd == -1,
-        "接受连接失败");
+    if(non_block)           // 非阻塞情况下
+        err(new_sock->fd == -1 && errno != EAGAIN && errno != EWOULDBLOCK,
+            "非阻塞: 接受连接失败");
+    else                    // 阻塞情况下
+        err(new_sock->fd == -1,
+            "接受连接失败");
 
     return new_sock;
 }
 
-void Sock::Conn(const std::string& ip, const int& port){
-    SockAddr Server(ip, port);
-    err(connect(fd, (sockaddr*)&Server.addr, Server.addr_len) == -1,
-        "连接失败");
+bool Sock::Conn(const std::string& ip, const int& port){
+    SockAddr* Server = new SockAddr(ip, port);
+    if(war(connect(fd, (sockaddr*)&Server->addr, Server->addr_len) == -1,
+        "连接失败"))
+        return false;
+    return true;
 }
 
-void Sock::Send(const std::string& msg){
-    err(send(fd, msg.c_str(), msg.size(), 0) == -1,
-        "发送失败");
+bool Sock::Send(const std::string& msg){
+    int len = send(fd, msg.c_str(), msg.size(), 0);
+    
+    if(war(len == 0,
+        "对方已关闭连接"))
+        return false;
+    
+    if(non_block)   // 非阻塞情况下，再试一次的情况
+        if(len == -1 && errno != EAGAIN && errno != EWOULDBLOCK)
+            return true;
+
+    war(len == -1,
+        "发送失败"); 
+    
+    return true;
 }
 
 std::string Sock::Recv(){
     if(!buf_init){
         buf = new char[BUFSIZE];
         buf_init = true;
-    }
+    }   // 初始化缓冲区
     memset(buf, '\0', BUFSIZE);
+
     int len = recv(fd, buf, BUFSIZE, 0);
-    err(len == -1,
-        "接收失败");
+    
+    if(war(len == 0,
+        "对方已关闭连接"))
+        return "kill";
+    
+    if(non_block)   // 非阻塞情况下，再试一次的情况
+        if(len == -1 && (errno == EAGAIN || errno == EWOULDBLOCK))
+            return "";
+        
+    war(len == -1,
+        "理论阻塞: 接收失败");
+
     return buf;
 }
