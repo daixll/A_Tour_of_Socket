@@ -3,23 +3,17 @@
 using namespace jiao;
 
 Sock::Sock(){
-    fd = socket(AF_INET, SOCK_STREAM, 0);
-    err(fd == -1,
-        "套接字创建失败");
+    addr = new SockAddr("", 0);
+    fd = -1;
 }
 
 Sock::Sock(const std::string& ip, const int& port){
-    if(ip == "" || port == 0){
-        fd = -1;
-        addr = new SockAddr("", 0);
-        return;
-    }
-
+    addr = new SockAddr(ip, port);
     fd = socket(AF_INET, SOCK_STREAM, 0);
     err(fd == -1,
         "套接字创建失败");
     
-    addr = new SockAddr(ip, port);
+    if(ip == "" || port == 0) return;   // 仅创建套接字
     err(bind(fd, (sockaddr*)&addr->addr, addr->addr_len) == -1,
         "套接字绑定失败");
 }
@@ -35,7 +29,7 @@ void Sock::Listen(const int& num){
 }
 
 Sock* Sock::Ac(){
-    Sock* new_sock = new Sock("", 0);
+    Sock* new_sock = new Sock();
     new_sock->fd = accept(fd, (sockaddr*)&new_sock->addr->addr, &new_sock->addr->addr_len);
 
     if(non_block)           // 非阻塞情况下
@@ -49,6 +43,9 @@ Sock* Sock::Ac(){
 }
 
 bool Sock::Conn(const std::string& ip, const int& port){
+    // 先创建套接字，但无需绑定，然后再连接
+    // 在 Sock 类中，已经创建了套接字，所以是 Sock.Conn()
+    // 连接后，Server 的套接字地址会被修改，而且不能删除
     SockAddr* Server = new SockAddr(ip, port);
     if(war(connect(fd, (sockaddr*)&Server->addr, Server->addr_len) == -1,
         "连接失败"))
