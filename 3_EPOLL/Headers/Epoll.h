@@ -3,6 +3,7 @@
 #include <unistd.h>
 #include <sys/epoll.h>
 #include <vector>
+#include <map>
 #include "Sock.h"
 #include "Tool.h"
 
@@ -24,10 +25,10 @@ public:
     void Del(Sock* sock);
 
     // 获取事件
-    std::vector<epoll_event> Wait();
+    std::vector<Sock*> Wait();
 private:
     int epoll_fd;                   // epoll 也是有一个文件描述符的
-    std::vector<epoll_event> events;// 事件数组
+    std::map<int, Sock*> sock_map;  // 用于保存套接字
 };
 
 }   // namespace jiao

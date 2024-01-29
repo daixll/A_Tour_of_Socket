@@ -3,6 +3,7 @@
 #include "Tool.h"
 #include "SockAddr.h"
 #include "unistd.h"
+#include <sys/epoll.h>
 
 #include <fcntl.h>
 
@@ -36,6 +37,8 @@ public:
 
     SockAddr*   addr;   // 套接字地址
     int         fd;     // 套接字
+
+    epoll_event ev;     // epoll 事件
 private:
     char*       buf;            // 缓冲区
     bool        buf_init=false; // 缓冲区是否初始化
