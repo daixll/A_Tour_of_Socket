@@ -12,26 +12,26 @@ Epoll::~Epoll(){
     close(epoll_fd);
 }
 
-void Epoll::Add(const int& fd){
+void Epoll::Add(Sock* sock, const int &new_event){
     epoll_event ev;
-    ev.data.fd = fd;
-    ev.events  = EPOLLIN | EPOLLET;  // 读事件 | 边缘触发
+    ev.data.fd = sock->fd;
+    ev.events  = new_event;
 
-    err(epoll_ctl(this->epoll_fd, EPOLL_CTL_ADD, fd, &ev) == -1,
+    err(epoll_ctl(this->epoll_fd, EPOLL_CTL_ADD, sock->fd, &ev) == -1,
         "epoll 添加事件失败");
 }
 
-void Epoll::Mod(const int& fd, const int& new_event){
+void Epoll::Mod(Sock* sock, const int& new_event){
     epoll_event ev;
-    ev.data.fd = fd;
+    ev.data.fd = sock->fd;
     ev.events  = new_event;
 
-    err(epoll_ctl(epoll_fd, EPOLL_CTL_MOD, fd, &ev) == -1,
+    err(epoll_ctl(epoll_fd, EPOLL_CTL_MOD, sock->fd, &ev) == -1,
         "epoll 修改事件失败");
 }
 
-void Epoll::Del(const int& fd){
-    err(epoll_ctl(epoll_fd, EPOLL_CTL_DEL, fd, NULL) == -1,
+void Epoll::Del(Sock* sock){
+    err(epoll_ctl(epoll_fd, EPOLL_CTL_DEL, sock->fd, NULL) == -1,
         "epoll 删除事件失败");
 }
 
