@@ -17,11 +17,15 @@ public:
 
     // 添加事件
     void Add(const int& fd);
+    // 修改事件
+    void Mod(const int& fd, const int& new_event);
+    // 删除事件
+    void Del(const int& fd);
 
     // 获取事件
     std::vector<epoll_event> Wait();
 private:
-    int fd;                         // epoll 也是有一个文件描述符的
+    int epoll_fd;                   // epoll 也是有一个文件描述符的
     std::vector<epoll_event> events;// 事件数组
 };
 
