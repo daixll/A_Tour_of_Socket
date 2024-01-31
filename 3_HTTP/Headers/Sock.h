@@ -35,6 +35,7 @@ public:
         non_block = true;
     }
 
+    std::string*data;   // 用于保存数据
     SockAddr*   addr;   // 套接字地址
     int         fd;     // 套接字
 
